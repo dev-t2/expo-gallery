@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo, useState } from 'react';
-import { Button, FlatList, ListRenderItem, useWindowDimensions } from 'react-native';
+import { Alert, Button, FlatList, ListRenderItem, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as ImagePicker from 'expo-image-picker';
@@ -7,17 +7,22 @@ import { ThemeProvider } from '@emotion/react';
 import styled from '@emotion/native';
 
 import theme from './src/theme';
-import { GalleryImage } from './src/components';
+import { GalleryItem } from './src/components';
 
 const Container = styled(SafeAreaView)({
   flex: 1,
   backgroundColor: '#fff',
 });
 
+export interface IItem {
+  id: number;
+  uri: string;
+}
+
 const App = () => {
   const { width } = useWindowDimensions();
 
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<IItem[]>([]);
 
   const imageSize = useMemo(() => width / 3, [width]);
 
@@ -30,15 +35,30 @@ const App = () => {
     });
 
     if (!result.canceled) {
-      setImages((prevState) => [...prevState, result.assets[0].uri]);
+      const id = images.length === 0 ? 0 : images[images.length - 1].id + 1;
+      const uri = result.assets[0].uri;
+
+      setImages((prevState) => [...prevState, { id, uri }]);
     }
-  }, []);
+  }, [images]);
 
-  const keyExtractor = useCallback((_: string, index: number) => `${index}`, []);
+  const keyExtractor = useCallback((image: IItem) => `${image.id}`, []);
 
-  const renderItem = useCallback<ListRenderItem<string>>(
+  const renderItem = useCallback<ListRenderItem<IItem>>(
     ({ item }) => {
-      return <GalleryImage size={imageSize} uri={item} />;
+      const onLongPress = () => {
+        Alert.alert('이미지를 삭제하시겠습니까?', '', [
+          { style: 'cancel', text: '아니요' },
+          {
+            text: '네',
+            onPress: () => {
+              setImages((prevState) => prevState.filter((state) => state.id !== item.id));
+            },
+          },
+        ]);
+      };
+
+      return <GalleryItem item={item} size={imageSize} onLongPress={onLongPress} />;
     },
     [imageSize]
   );
@@ -48,7 +68,7 @@ const App = () => {
       <Container>
         <StatusBar style="auto" />
 
-        <Button title="Pick an image from camera roll" onPress={pickImage} />
+        <Button title="갤러리 열기" onPress={pickImage} />
 
         <FlatList
           numColumns={3}
