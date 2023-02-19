@@ -1,5 +1,5 @@
-import { memo, useCallback, useMemo, useState } from 'react';
-import { Alert, Button, FlatList, ListRenderItem, useWindowDimensions } from 'react-native';
+import { memo, useCallback, useState } from 'react';
+import { Alert, FlatList, ListRenderItem, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as ImagePicker from 'expo-image-picker';
@@ -22,31 +22,31 @@ export interface IItem {
 const App = () => {
   const { width } = useWindowDimensions();
 
-  const [images, setImages] = useState<IItem[]>([]);
-
-  const imageSize = useMemo(() => width / 3, [width]);
-
-  const pickImage = useCallback(async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      const id = images.length === 0 ? 0 : images[images.length - 1].id + 1;
-      const uri = result.assets[0].uri;
-
-      setImages((prevState) => [...prevState, { id, uri }]);
-    }
-  }, [images]);
+  const [images, setImages] = useState<IItem[]>([{ id: -1, uri: '' }]);
 
   const keyExtractor = useCallback((image: IItem) => `${image.id}`, []);
 
   const renderItem = useCallback<ListRenderItem<IItem>>(
     ({ item }) => {
-      const onLongPress = () => {
+      const onOpenGallery = async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.All,
+          allowsEditing: true,
+          aspect: [4, 3],
+          quality: 1,
+        });
+
+        if (!result.canceled) {
+          setImages((prevState) => {
+            const id = prevState[prevState.length - 1].id + 1;
+            const uri = result.assets[0].uri;
+
+            return [...prevState, { id, uri }];
+          });
+        }
+      };
+
+      const onDeleteImage = () => {
         Alert.alert('이미지를 삭제하시겠습니까?', '', [
           { style: 'cancel', text: '아니요' },
           {
@@ -58,17 +58,22 @@ const App = () => {
         ]);
       };
 
-      return <GalleryItem item={item} size={imageSize} onLongPress={onLongPress} />;
+      return (
+        <GalleryItem
+          item={item}
+          size={width / 3}
+          onPress={onOpenGallery}
+          onLongPress={onDeleteImage}
+        />
+      );
     },
-    [imageSize]
+    [width]
   );
 
   return (
     <ThemeProvider theme={theme}>
       <Container>
         <StatusBar style="auto" />
-
-        <Button title="갤러리 열기" onPress={pickImage} />
 
         <FlatList
           numColumns={3}
