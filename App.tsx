@@ -7,7 +7,7 @@ import { ThemeProvider } from '@emotion/react';
 import styled from '@emotion/native';
 
 import theme from './src/theme';
-import { DropdownPicker, GalleryItem } from './src/components';
+import { DropdownPicker, GalleryItem, TextInputModal } from './src/components';
 
 const Container = styled(SafeAreaView)({
   flex: 1,
@@ -27,13 +27,29 @@ export interface IItem {
 const App = () => {
   const { width } = useWindowDimensions();
 
-  const [albums] = useState([{ id: 0, title: '기본' }]);
+  const [albums, setAlbums] = useState([{ id: 0, title: '기본' }]);
   const [selectedAlbum] = useState<IAlbum>({ id: 0, title: '기본' });
+  const [isVisible, setIsVisible] = useState(false);
+  const [albumName, setAlbumName] = useState('');
   const [images, setImages] = useState<IItem[]>([{ id: -1, uri: '' }]);
 
   const onAddAlbum = useCallback(() => {
-    //
+    setIsVisible(true);
   }, []);
+
+  const onChangeAlbumName = useCallback((albumName: string) => {
+    setAlbumName(albumName);
+  }, []);
+
+  const onSubmitAlbumName = useCallback(() => {
+    setAlbums((prevState) => {
+      const id = prevState[prevState.length - 1].id + 1;
+
+      return [...prevState, { id, title: albumName }];
+    });
+    setIsVisible(false);
+    setAlbumName('');
+  }, [albumName]);
 
   const keyExtractor = useCallback((image: IItem) => `${image.id}`, []);
 
@@ -87,6 +103,13 @@ const App = () => {
         <StatusBar style="auto" />
 
         <DropdownPicker albums={albums} selectedAlbum={selectedAlbum} onAddAlbum={onAddAlbum} />
+
+        <TextInputModal
+          isVisible={isVisible}
+          value={albumName}
+          onChangeText={onChangeAlbumName}
+          onSubmit={onSubmitAlbumName}
+        />
 
         <FlatList
           numColumns={3}
