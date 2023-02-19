@@ -7,12 +7,17 @@ import { ThemeProvider } from '@emotion/react';
 import styled from '@emotion/native';
 
 import theme from './src/theme';
-import { GalleryItem } from './src/components';
+import { DropdownPicker, GalleryItem } from './src/components';
 
 const Container = styled(SafeAreaView)({
   flex: 1,
   backgroundColor: '#fff',
 });
+
+export interface IAlbum {
+  id: number;
+  title: string;
+}
 
 export interface IItem {
   id: number;
@@ -22,7 +27,13 @@ export interface IItem {
 const App = () => {
   const { width } = useWindowDimensions();
 
+  const [albums] = useState([{ id: 0, title: '기본' }]);
+  const [selectedAlbum] = useState<IAlbum>({ id: 0, title: '기본' });
   const [images, setImages] = useState<IItem[]>([{ id: -1, uri: '' }]);
+
+  const onAddAlbum = useCallback(() => {
+    //
+  }, []);
 
   const keyExtractor = useCallback((image: IItem) => `${image.id}`, []);
 
@@ -74,6 +85,8 @@ const App = () => {
     <ThemeProvider theme={theme}>
       <Container>
         <StatusBar style="auto" />
+
+        <DropdownPicker albums={albums} selectedAlbum={selectedAlbum} onAddAlbum={onAddAlbum} />
 
         <FlatList
           numColumns={3}
