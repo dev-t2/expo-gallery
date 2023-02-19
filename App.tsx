@@ -1,5 +1,5 @@
-import { memo, useCallback, useState } from 'react';
-import { Button, FlatList, ListRenderItem } from 'react-native';
+import { memo, useCallback, useMemo, useState } from 'react';
+import { Button, FlatList, ListRenderItem, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as ImagePicker from 'expo-image-picker';
@@ -11,13 +11,15 @@ import { GalleryImage } from './src/components';
 
 const Container = styled(SafeAreaView)({
   flex: 1,
-  justifyContent: 'center',
-  alignItems: 'center',
   backgroundColor: '#fff',
 });
 
 const App = () => {
+  const { width } = useWindowDimensions();
+
   const [images, setImages] = useState<string[]>([]);
+
+  const imageSize = useMemo(() => width / 3, [width]);
 
   const pickImage = useCallback(async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -34,9 +36,12 @@ const App = () => {
 
   const keyExtractor = useCallback((_: string, index: number) => `${index}`, []);
 
-  const renderItem = useCallback<ListRenderItem<string>>(({ item }) => {
-    return <GalleryImage uri={item} />;
-  }, []);
+  const renderItem = useCallback<ListRenderItem<string>>(
+    ({ item }) => {
+      return <GalleryImage size={imageSize} uri={item} />;
+    },
+    [imageSize]
+  );
 
   return (
     <ThemeProvider theme={theme}>
@@ -45,7 +50,12 @@ const App = () => {
 
         <Button title="Pick an image from camera roll" onPress={pickImage} />
 
-        <FlatList data={images} keyExtractor={keyExtractor} renderItem={renderItem} />
+        <FlatList
+          numColumns={3}
+          data={images}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+        />
       </Container>
     </ThemeProvider>
   );
