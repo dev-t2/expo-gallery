@@ -42,14 +42,21 @@ const App = () => {
   }, []);
 
   const onSubmitAlbumName = useCallback(() => {
-    setAlbums((prevState) => {
-      const id = prevState[prevState.length - 1].id + 1;
+    if (albumName) {
+      setAlbums((prevState) => {
+        const id = prevState[prevState.length - 1].id + 1;
 
-      return [...prevState, { id, title: albumName }];
-    });
+        return [...prevState, { id, title: albumName }];
+      });
+      setIsVisible(false);
+      setAlbumName('');
+    }
+  }, [albumName]);
+
+  const onCloseModal = useCallback(() => {
     setIsVisible(false);
     setAlbumName('');
-  }, [albumName]);
+  }, []);
 
   const keyExtractor = useCallback((image: IItem) => `${image.id}`, []);
 
@@ -109,6 +116,7 @@ const App = () => {
           value={albumName}
           onChangeText={onChangeAlbumName}
           onSubmit={onSubmitAlbumName}
+          onClose={onCloseModal}
         />
 
         <FlatList
